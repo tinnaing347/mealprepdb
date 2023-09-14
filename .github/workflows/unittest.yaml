@@ -50,10 +50,10 @@ jobs:
         run: poetry run alembic upgrade head
 
       - name: Run tests
-        run: poetry run pytest -v -s -m "not live" --cov=mealprep/ --cov-report=term-missing
+        run: poetry run pytest -v -s -m "not live" --cov=mealprepdb/ --cov-report=term-missing
 
       - name: Run mypy
-        run: poetry run mypy mealprep --python-version 3.11 --strict
+        run: poetry run mypy mealprepdb --python-version 3.11 --strict
 
       - name: Run alembic downgrade
         run: poetry run alembic downgrade base
