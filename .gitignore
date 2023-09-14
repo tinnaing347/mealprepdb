@@ -1,0 +1,13 @@
+*.json
+*.jsonl
+*.csv
+*.txt
+__pycache__/
+.python-version
+
+.pytest_cache/
+.mypy_cache/
+*.dbml
+
+.env
+.coverage

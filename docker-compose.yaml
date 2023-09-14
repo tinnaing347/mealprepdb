@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  pgdb:
+    restart: "no"
+    container_name: "mealprep_pg"
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=${MEALPREPDB_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${MEALPREPDB_POSTGRES_PASSWORD}
+      - POSTGRES_DB=${MEALPREPDB_POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    command: postgres -c 'max_connections=100'
+    expose:
+      - "5432"
+    ports:
+      - "5454:5432" # for debugging 
+    shm_size: 1g
+
+
+  app:
+    restart: "no"
+    container_name: "mealprepdb_app"
+    image: mealprepdb:dev
+    environment:
+      - WAIT_HOSTS=pgdb:5432
+      - MEALPREPDB_POSTGRES_USER=${MEALPREPDB_POSTGRES_USER}
+      - MEALPREPDB_POSTGRES_PASSWORD=${MEALPREPDB_POSTGRES_PASSWORD}
+      - MEALPREPDB_POSTGRES_HOST=${MEALPREPDB_POSTGRES_HOST}
+      - MEALPREPDB_POSTGRES_PORT=${MEALPREPDB_POSTGRES_PORT}
+      - MEALPREPDB_POSTGRES_DB=${MEALPREPDB_POSTGRES_DB}
+      - MEALPREPDB_POSTGRES_TEST_DB=${MEALPREPDB_POSTGRES_TEST_DB}
+      - MEALPREPDB_ENVIRONMENT=${MEALPREPDB_ENVIRONMENT}
+      - MEALPREPDB_AUTH0_DOMAIN=${MEALPREPDB_AUTH0_DOMAIN}
+      - MEALPREPDB_AUTH0_AUDIENCE=${MEALPREPDB_AUTH0_AUDIENCE}
+      - MEALPREPDB_AUTH0_CLIENT_ID=${MEALPREPDB_AUTH0_CLIENT_ID}
+      - MEALPREPDB_AUTH0_SECRET=${MEALPREPDB_AUTH0_SECRET}
+      - MEALPREPDB_DB_ENGINE_MAX_OVERFLOW=${MEALPREPDB_DB_ENGINE_MAX_OVERFLOW}
+      - MEALPREPDB_DB_ENGINE_POOL_SIZE=${MEALPREPDB_DB_ENGINE_POOL_SIZE}
+      - MEALPREPDB_LIVE_TEST_URL=${MEALPREPDB_LIVE_TEST_URL}
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    command: sh -c "../wait && uvicorn --host 0.0.0.0 --port 8080 --log-level debug --reload mealprepdb.api.main:app"
+    volumes:
+      - .:/app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - pgdb
+
+volumes:
+  pgdata:
+  cache:

@@ -1,0 +1,59 @@
+name: unittests
+
+on:
+  pull_request:
+    branches:
+      - development*
+      - stable-release
+      - "*-dev"
+
+  push:
+    branches:
+      - development*
+
+jobs:
+  container-job:
+    runs-on: ubuntu-latest
+
+    container: bsnacks000/python-poetry:3.11-1.3.2
+
+    services:
+      tsdb:
+        image: timescale/timescaledb:2.8.1-pg13
+        env:
+          POSTGRES_USER: tin
+          POSTGRES_PASSWORD: tin123
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd pg_isready 
+          --health-interval 10s 
+          --health-timeout 5s 
+          --health-retries 5
+  
+    env:
+      MEALPREPDB_POSTGRES_USER: tin
+      MEALPREPDB_POSTGRES_PASSWORD: tin123
+      MEALPREPDB_POSTGRES_HOST: tsdb
+      MEALPREPDB_POSTGRES_PORT: 5432 # default
+      MEALPREPDB_POSTGRES_TEST_DB: testdb
+      MEALPREPDB_POSTGRES_URL: postgresql+asyncpg://tin:tin123@tsdb:5432/testdb
+      MEALPREPDB_ENVIRONMENT: testing
+
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Run alembic upgrade
+        run: poetry run alembic upgrade head
+
+      - name: Run tests
+        run: poetry run pytest -v -s -m "not live" --cov=mealprep/ --cov-report=term-missing
+
+      - name: Run mypy
+        run: poetry run mypy mealprep --python-version 3.11 --strict
+
+      - name: Run alembic downgrade
+        run: poetry run alembic downgrade base
