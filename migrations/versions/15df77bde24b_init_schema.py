@@ -74,7 +74,7 @@ def upgrade() -> None:
     )
 
     op.create_table(
-        "ingredient_in_invertory",
+        "ingredient_in_inventory",
         id_column_big_autoincrementing,
         sa.Column(
             "ingredient_id",
@@ -126,7 +126,7 @@ def upgrade() -> None:
         sa.Column(
             "ingredient_id",
             sa.BigInteger,
-            sa.ForeignKey("ingredient_in_invertory.id", ondelete="CASCADE"),
+            sa.ForeignKey("ingredient_in_inventory.id", ondelete="CASCADE"),
             nullable=False,
         ),
         sa.Column("quantity", sa.Float, nullable=True),
@@ -194,7 +194,7 @@ def upgrade() -> None:
         sa.Column(
             "ingredient_id",
             sa.BigInteger,
-            sa.ForeignKey("ingredient_in_invertory.id", ondelete="CASCADE"),
+            sa.ForeignKey("ingredient_in_inventory.id", ondelete="CASCADE"),
             nullable=False,
         ),
         sa.Column(
@@ -207,14 +207,14 @@ def upgrade() -> None:
 
     # ingredient
     op.create_index(
-        "idx__ingredient_in_invertory__purchased_on",
-        "ingredient_in_invertory",
+        "idx__ingredient_in_inventory__purchased_on",
+        "ingredient_in_inventory",
         columns=["purchased_on"],
     )
 
     op.create_index(
-        "idx__ingredient_in_invertory__ingredient_id_purchased_on",
-        "ingredient_in_invertory",
+        "idx__ingredient_in_inventory__ingredient_id_purchased_on",
+        "ingredient_in_inventory",
         columns=["ingredient_id", "purchased_on"],
     )
 
@@ -277,5 +277,5 @@ def downgrade() -> None:
     op.drop_table("meal")
     op.drop_table("dish_ingredient")
     op.drop_table("dish")
-    op.drop_table("ingredient_in_invertory")
+    op.drop_table("ingredient_in_inventory")
     op.drop_table("ingredient")
