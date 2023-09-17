@@ -77,7 +77,7 @@ class IngredientDetailViewEntity(IngredientData, dbentity.Queryable[ObjectIdFrom
     ) -> sa.Select[Any]:
         t = transaction.get_table("ingredient")
         stmt = (
-            sa.Select[Any](t.c.id, t.c.name, t.c.type)
+            sa.select(t.c.id, t.c.name, t.c.type)
             .order_by(t.c.id)
             .where(t.c.id == where.obj_id)
         )

@@ -84,7 +84,7 @@ async def test_ingredient_in_inventory_list_view(
         response = await client.get(path, params=params)
         assert response.status_code == 200
         results = response.json()["results"]
-        assert len(results) == 2
+        assert len(results) == 3
 
         params = {"finished_on": "2017-07-02"}
         response = await client.get(path, params=params)

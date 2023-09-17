@@ -14,7 +14,13 @@ from mealprepdb.api import main, deps
 import orjson
 from mealprepdb.api.base import orjson_serializer
 
-from .seeds import fixture_load, ingredient, ingredient_in_inventory
+from .seeds import (
+    fixture_load,
+    ingredient,
+    ingredient_in_inventory,
+    dish,
+    dish_ingredient,
+)
 
 import logging
 
@@ -83,3 +89,10 @@ def module_test_app(module_get_transaction):
 @pytest.fixture(scope="module")
 async def module_ingredient_data(module_transaction):
     await fixture_load(module_transaction, ingredient, ingredient_in_inventory)
+
+
+@pytest.fixture(scope="module")
+async def module_dish_data(module_transaction):
+    await fixture_load(
+        module_transaction, ingredient, ingredient_in_inventory, dish, dish_ingredient
+    )

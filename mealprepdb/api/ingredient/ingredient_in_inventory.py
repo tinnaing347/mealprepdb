@@ -178,7 +178,10 @@ class IngredientInInventoryResource(ParentResourceModel):
             return {
                 "self": self._fastapi.url_path_for(
                     "ingredient_in_inventory_detail_view", id=self.id
-                )
+                ),
+                "ingredient": self._fastapi.url_path_for(
+                    "ingredient_detail_view", id=self.ingredient_id
+                ),
             }
         return None
 

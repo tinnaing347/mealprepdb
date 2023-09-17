@@ -43,6 +43,17 @@ async def load(trans: dal.TransactionManager) -> sa.engine.CursorResult:
                     "purchased_on": x("2017-06-01"),
                     "finished_on": None,
                 },
+                {
+                    "id": 4,
+                    "ingredient_id": 4,
+                    "from_where": "onion ville",
+                    "brand": "good mong",
+                    "price": 2.99,
+                    "quantity": 1,
+                    "unit": "pound",
+                    "purchased_on": x("2017-06-20"),
+                    "finished_on": None,
+                },
             ]
         )
         .returning(tab)
