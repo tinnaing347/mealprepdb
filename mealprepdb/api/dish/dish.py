@@ -112,7 +112,12 @@ class DishResource(ParentResourceModel):
     @property
     def links(self) -> Optional[Dict[str, ResourceUri]]:
         if self._fastapi:
-            return {"self": self._fastapi.url_path_for("dish_detail_view", id=self.id)}
+            return {
+                "self": self._fastapi.url_path_for("dish_detail_view", id=self.id),
+                "dish_ingredient": self._fastapi.url_path_for(
+                    "dish_ingredient_list_view", id=self.id
+                ),
+            }
         return None
 
 

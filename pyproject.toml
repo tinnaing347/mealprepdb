@@ -20,6 +20,7 @@ uvicorn = "^0.23.2"
 [tool.poetry.dev-dependencies]
 anyio = "^3.6.2"
 black = "^23.1.0"
+httpx = "0.23.0" # https://github.com/encode/httpx/issues/2462
 mypy = "^1.0.1"
 pytest = "^7.2.1"
 pytest-cov = "^4.0.0"
