@@ -20,6 +20,9 @@ from .seeds import (
     ingredient_in_inventory,
     dish,
     dish_ingredient,
+    meal,
+    meal_dish,
+    meal_ingredient,
 )
 
 import logging
@@ -95,4 +98,18 @@ async def module_ingredient_data(module_transaction):
 async def module_dish_data(module_transaction):
     await fixture_load(
         module_transaction, ingredient, ingredient_in_inventory, dish, dish_ingredient
+    )
+
+
+@pytest.fixture(scope="module")
+async def module_meal_data(module_transaction):
+    await fixture_load(
+        module_transaction,
+        ingredient,
+        ingredient_in_inventory,
+        dish,
+        dish_ingredient,
+        meal,
+        meal_dish,
+        meal_ingredient,
     )

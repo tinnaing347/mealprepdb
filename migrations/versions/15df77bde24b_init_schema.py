@@ -39,6 +39,7 @@ def upgrade() -> None:
         server_default=sa.func.now(),
     )
 
+    # this needs more thinking; where does eggs belong here?
     _ingredient_type_enum = [
         "meat",
         "vegetable",

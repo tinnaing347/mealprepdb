@@ -47,10 +47,32 @@ async def load(trans: dal.TransactionManager) -> sa.engine.CursorResult:
                     "id": 4,
                     "ingredient_id": 4,
                     "from_where": "onion ville",
-                    "brand": "good mong",
+                    "brand": "good beans",
                     "price": 2.99,
                     "quantity": 1,
                     "unit": "pound",
+                    "purchased_on": x("2017-06-20"),
+                    "finished_on": None,
+                },
+                {
+                    "id": 5,
+                    "ingredient_id": 5,
+                    "from_where": "farmer market",
+                    "brand": "",
+                    "price": 4.99,
+                    "quantity": 3,
+                    "unit": "oucne",
+                    "purchased_on": x("2017-06-30"),
+                    "finished_on": None,
+                },
+                {
+                    "id": 6,
+                    "ingredient_id": 6,
+                    "from_where": "onion ville",
+                    "brand": "good beans",
+                    "price": 2.99,
+                    "quantity": 1,
+                    "unit": "can",
                     "purchased_on": x("2017-06-20"),
                     "finished_on": None,
                 },
@@ -59,7 +81,7 @@ async def load(trans: dal.TransactionManager) -> sa.engine.CursorResult:
         .returning(tab)
     )
     result = await trans.execute(stmt)
-    await trans.execute(sa.text("select setval('ingredient_in_inventory_id_seq', 3)"))
+    await trans.execute(sa.text("select setval('ingredient_in_inventory_id_seq', 6)"))
     return result
 
 

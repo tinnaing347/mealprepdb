@@ -46,7 +46,7 @@ async def dish_detail_view(
     return model.DishResource.model_validate(data.obj)
 
 
-@router.get("/{id}/ingredients")
+@router.get("/{id}/ingredient/")
 async def dish_ingredient_list_view(
     id: int,
     request: Request,

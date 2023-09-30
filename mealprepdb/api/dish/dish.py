@@ -117,6 +117,9 @@ class DishResource(ParentResourceModel):
                 "dish_ingredient": self._fastapi.url_path_for(
                     "dish_ingredient_list_view", id=self.id
                 ),
+                "dish_meal": self._fastapi.url_path_for(
+                    "dish_meal_list_view", id=self.id
+                ),
             }
         return None
 

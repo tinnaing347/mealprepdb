@@ -182,6 +182,9 @@ class IngredientInInventoryResource(ParentResourceModel):
                 "ingredient": self._fastapi.url_path_for(
                     "ingredient_detail_view", id=self.ingredient_id
                 ),
+                "ingredient_meal": self._fastapi.url_path_for(
+                    "ingredient_meal_list_view", id=self.id
+                ),
             }
         return None
 

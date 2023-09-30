@@ -23,6 +23,7 @@ import sys
 
 from .ingredient.route import router as ingredient_router
 from .dish.route import router as dish_router
+from .meal.route import router as meal_router
 
 description = """ 
 Database backend for Meal Prepping.
@@ -114,3 +115,4 @@ router = APIRouter(prefix="/v1")
 app.include_router(router)
 app.include_router(ingredient_router)
 app.include_router(dish_router)
+app.include_router(meal_router)

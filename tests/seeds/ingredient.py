@@ -12,12 +12,14 @@ async def load(trans: dal.TransactionManager) -> sa.engine.CursorResult:
                 {"id": 2, "name": "rice", "type": "starch"},
                 {"id": 3, "name": "cumin", "type": "spice"},
                 {"id": 4, "name": "mong beans", "type": "legumes"},
+                {"id": 5, "name": "ham", "type": "meat"},
+                {"id": 6, "name": "chickpeas", "type": "legumes"},
             ]
         )
         .returning(tab)
     )
     result = await trans.execute(stmt)
-    await trans.execute(sa.text("select setval('ingredient_id_seq', 4)"))
+    await trans.execute(sa.text("select setval('ingredient_id_seq', 6)"))
     return result
 
 
