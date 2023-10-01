@@ -7,9 +7,7 @@ from . import (
     meal_ingredient as meal_ing_model,
     meal_dish as meal_dish_model,
 )
-from aiodal.oqm import views
 from aiodal import dal
-from ..base import ObjectIdFromUrl
 from typing import List, Any
 
 deps: List[Any] = [
@@ -34,12 +32,9 @@ async def meal_list_view(
 ) -> model.MealListView:
     """Return a list of meals"""
 
-    q = model.MealListQ(where=params)
-    data = await views.TotalCountListViewQuery.from_query(
-        transaction, request.url._url, params.offset, params.limit, q, "/v1"
+    return await model.MealListView.get(
+        transaction=transaction, request_url=str(request.url), params=params
     )
-
-    return model.MealListView.model_validate(data)
 
 
 @meal_router.get("/{id}")
@@ -50,11 +45,7 @@ async def meal_detail_view(
 ) -> model.MealResource:
     """Return an meal detail."""
 
-    detail_params = ObjectIdFromUrl(id)
-    q = model.MealDetailQ(where=detail_params)
-    data = await views.DetailViewQuery.from_query(transaction, q)
-
-    return model.MealResource.model_validate(data.obj)
+    return await model.MealResource.detail(transaction, obj_id=id)
 
 
 @ingredient_router.get("/{id}/meal/")
@@ -67,15 +58,12 @@ async def ingredient_meal_list_view(
 ) -> meal_ing_model.MealIngredientListView:
     """Return a list of meal for an ingredient in inventory."""
 
-    params_ = meal_ing_model.PrivateMealIngredientQueryParams(
-        ingredient_id=id, params=params
+    return await meal_ing_model.MealIngredientListView.from_ingredient(
+        transaction=transaction,
+        ingredient_id=id,
+        request_url=str(request.url),
+        params=params,
     )
-    q = meal_ing_model.MealIngredientListQ(where=params_)
-    data = await views.TotalCountListViewQuery.from_query(
-        transaction, request.url._url, params.offset, params.limit, q, "/v1"
-    )
-
-    return meal_ing_model.MealIngredientListView.model_validate(data)
 
 
 @dish_router.get("/{id}/meal/")
@@ -88,13 +76,12 @@ async def dish_meal_list_view(
 ) -> meal_dish_model.MealDishListView:
     """Return a list of meals consumed for a dish."""
 
-    params_ = meal_dish_model.PrivateMealDishQueryParams(dish_id=id, params=params)
-    q = meal_dish_model.MealDishListQ(where=params_)
-    data = await views.TotalCountListViewQuery.from_query(
-        transaction, request.url._url, params.offset, params.limit, q, "/v1"
+    return await meal_dish_model.MealDishListView.from_dish(
+        transaction=transaction,
+        dish_id=id,
+        request_url=str(request.url),
+        params=params,
     )
-
-    return meal_dish_model.MealDishListView.model_validate(data)
 
 
 router.include_router(meal_router)

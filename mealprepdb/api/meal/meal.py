@@ -1,21 +1,18 @@
 from typing import Dict, Optional, Any, List
-import dataclasses
 from ..base import (
-    Paginateable,
     BaseListViewQueryParamsModel,
     ListViewModel,
-    ObjectIdFromUrl,
     ResourceUri,
     ParentResourceModel,
     MealTypeEnum,
 )
 from aiodal import dal
-from aiodal.oqm import dbentity, query
 from aiodal.helpers import sa_total_count
 import sqlalchemy as sa
-from fastapi import Query
+from fastapi import Query, HTTPException
 import pydantic
 import datetime
+from .. import paginator
 
 
 class MealQueryParams(BaseListViewQueryParamsModel):
@@ -36,69 +33,6 @@ class MealQueryParams(BaseListViewQueryParamsModel):
         self.limit = limit
 
 
-@dataclasses.dataclass
-class MealData:
-    id: int = 0
-    type: MealTypeEnum = MealTypeEnum._default
-    description: str = ""
-    consumed_on: datetime.date = datetime.date(1970, 1, 1)
-
-
-@dataclasses.dataclass
-class MealListViewEntity(MealData, Paginateable):
-    @classmethod
-    def query_stmt(
-        cls, transaction: dal.TransactionManager, where: MealQueryParams
-    ) -> sa.Select[Any]:
-        t = transaction.get_table("meal")
-        stmt = (
-            sa.select(
-                t.c.id,
-                t.c.type,
-                t.c.description,
-                t.c.consumed_on,
-                sa_total_count(t.c.id),
-            )
-            .order_by(t.c.id)
-            .offset(where.offset)
-            .limit(where.limit)
-        )
-
-        if where.type:
-            stmt = stmt.where(t.c.type == where.type)
-        if where.consumed_on:
-            stmt = stmt.where(t.c.consumed_on == where.consumed_on)
-        if where.consumed_on__le:
-            stmt = stmt.where(t.c.consumed_on <= where.consumed_on__le)
-        if where.consumed_on__ge:
-            stmt = stmt.where(t.c.consumed_on >= where.consumed_on__ge)
-
-        return stmt
-
-
-@dataclasses.dataclass
-class MealDetailViewEntity(MealData, dbentity.Queryable[ObjectIdFromUrl]):
-    @classmethod
-    def query_stmt(
-        cls, transaction: dal.TransactionManager, where: ObjectIdFromUrl
-    ) -> sa.Select[Any]:
-        t = transaction.get_table("meal")
-        stmt = (
-            sa.select(t.c.id, t.c.type, t.c.description, t.c.consumed_on)
-            .order_by(t.c.id)
-            .where(t.c.id == where.obj_id)
-        )
-        return stmt
-
-
-class MealListQ(query.ListQ[MealListViewEntity, MealQueryParams]):
-    __db_obj__ = MealListViewEntity
-
-
-class MealDetailQ(query.DetailQ[MealDetailViewEntity, ObjectIdFromUrl]):
-    __db_obj__ = MealDetailViewEntity
-
-
 class MealResource(ParentResourceModel):
     id: int
     type: Optional[MealTypeEnum] = None
@@ -114,6 +48,66 @@ class MealResource(ParentResourceModel):
             }
         return None
 
+    @classmethod
+    async def detail(
+        cls,
+        transaction: dal.TransactionManager,
+        obj_id: int,
+    ) -> "MealResource":
+        t = transaction.get_table("meal")
+        stmt = (
+            sa.select(t.c.id, t.c.type, t.c.description, t.c.consumed_on)
+            .order_by(t.c.id)
+            .where(t.c.id == obj_id)
+        )
+        res = await transaction.execute(stmt)
+        result = res.one_or_none()
+        if not result:
+            raise HTTPException(status_code=404, detail="Not Found.")
+
+        return cls.model_validate(result)
+
 
 class MealListView(ListViewModel[MealResource]):
     results: List[MealResource]
+
+    @classmethod
+    async def get(
+        cls,
+        transaction: dal.TransactionManager,
+        request_url: str,
+        params: MealQueryParams,
+    ) -> "MealListView":
+        t = transaction.get_table("meal")
+        stmt = (
+            sa.select(
+                t.c.id,
+                t.c.type,
+                t.c.description,
+                t.c.consumed_on,
+                sa_total_count(t.c.id),
+            )
+            .order_by(t.c.id)
+            .offset(params.offset)
+            .limit(params.limit)
+        )
+
+        if params.type:
+            stmt = stmt.where(t.c.type == params.type)
+        if params.consumed_on:
+            stmt = stmt.where(t.c.consumed_on == params.consumed_on)
+        if params.consumed_on__le:
+            stmt = stmt.where(t.c.consumed_on <= params.consumed_on__le)
+        if params.consumed_on__ge:
+            stmt = stmt.where(t.c.consumed_on >= params.consumed_on__ge)
+
+        res = await transaction.execute(stmt)
+        results = [dict(r) for r in res.mappings()]
+        page = paginator.get(results, request_url, params.offset, params.limit)
+        return cls.model_validate(
+            {
+                "total_count": page.total_count,
+                "next_url": page.next_url,
+                "results": results,
+            }
+        )

@@ -1,20 +1,17 @@
-from typing import Dict, Optional, Any, List
-import dataclasses
+from typing import Dict, Optional, List
 from ..base import (
     IngredientTypeEnum,
-    Paginateable,
     BaseListViewQueryParamsModel,
     ListViewModel,
-    ObjectIdFromUrl,
     ResourceUri,
     ParentResourceModel,
 )
 from aiodal import dal
-from aiodal.oqm import dbentity, query
 from aiodal.helpers import sa_total_count
 import sqlalchemy as sa
-from fastapi import Query
+from fastapi import Query, HTTPException
 import pydantic
+from .. import paginator
 
 
 class IngredientQueryParams(BaseListViewQueryParamsModel):
@@ -33,65 +30,6 @@ class IngredientQueryParams(BaseListViewQueryParamsModel):
         self.type = type
 
 
-@dataclasses.dataclass
-class IngredientData:
-    id: int = 0
-    name: str = ""
-    type: IngredientTypeEnum = IngredientTypeEnum._default
-
-
-@dataclasses.dataclass
-class IngredientListViewEntity(IngredientData, Paginateable):
-    @classmethod
-    def query_stmt(
-        cls, transaction: dal.TransactionManager, where: IngredientQueryParams
-    ) -> sa.Select[Any]:
-        t = transaction.get_table("ingredient")
-        stmt = (
-            sa.select(
-                t.c.id,
-                t.c.name,
-                t.c.type,
-                sa_total_count(t.c.id),
-            )
-            .order_by(t.c.id)
-            .offset(where.offset)
-            .limit(where.limit)
-        )
-
-        if where.name:
-            stmt = stmt.where(t.c.name == where.name)
-        if where.name__contains:
-            stmt = stmt.where(t.c.name.contains(where.name__contains))
-        if where.type:
-            stmt = stmt.where(t.c.type == where.type)
-
-        return stmt
-
-
-@dataclasses.dataclass
-class IngredientDetailViewEntity(IngredientData, dbentity.Queryable[ObjectIdFromUrl]):
-    @classmethod
-    def query_stmt(
-        cls, transaction: dal.TransactionManager, where: ObjectIdFromUrl
-    ) -> sa.Select[Any]:
-        t = transaction.get_table("ingredient")
-        stmt = (
-            sa.select(t.c.id, t.c.name, t.c.type)
-            .order_by(t.c.id)
-            .where(t.c.id == where.obj_id)
-        )
-        return stmt
-
-
-class IngredientListQ(query.ListQ[IngredientListViewEntity, IngredientQueryParams]):
-    __db_obj__ = IngredientListViewEntity
-
-
-class IngredientDetailQ(query.DetailQ[IngredientDetailViewEntity, ObjectIdFromUrl]):
-    __db_obj__ = IngredientDetailViewEntity
-
-
 class IngredientResource(ParentResourceModel):
     id: int
     name: str
@@ -106,6 +44,64 @@ class IngredientResource(ParentResourceModel):
             }
         return None
 
+    @classmethod
+    async def detail(
+        cls,
+        transaction: dal.TransactionManager,
+        obj_id: int,
+    ) -> "IngredientResource":
+        t = transaction.get_table("ingredient")
+        stmt = (
+            sa.select(t.c.id, t.c.name, t.c.type)
+            .order_by(t.c.id)
+            .where(t.c.id == obj_id)
+        )
+
+        res = await transaction.execute(stmt)
+        result = res.one_or_none()
+        if not result:
+            raise HTTPException(status_code=404, detail="Not Found.")
+
+        return cls.model_validate(result)
+
 
 class IngredientListView(ListViewModel[IngredientResource]):
     results: List[IngredientResource]
+
+    @classmethod
+    async def get(
+        cls,
+        transaction: dal.TransactionManager,
+        request_url: str,
+        params: IngredientQueryParams,
+    ) -> "IngredientListView":
+        t = transaction.get_table("ingredient")
+        stmt = (
+            sa.select(
+                t.c.id,
+                t.c.name,
+                t.c.type,
+                sa_total_count(t.c.id),
+            )
+            .order_by(t.c.id)
+            .offset(params.offset)
+            .limit(params.limit)
+        )
+
+        if params.name:
+            stmt = stmt.where(t.c.name == params.name)
+        if params.name__contains:
+            stmt = stmt.where(t.c.name.contains(params.name__contains))
+        if params.type:
+            stmt = stmt.where(t.c.type == params.type)
+
+        res = await transaction.execute(stmt)
+        results = [dict(r) for r in res.mappings()]
+        page = paginator.get(results, request_url, params.offset, params.limit)
+        return cls.model_validate(
+            {
+                "total_count": page.total_count,
+                "next_url": page.next_url,
+                "results": results,
+            }
+        )

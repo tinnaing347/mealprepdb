@@ -4,7 +4,6 @@ from ..base import (
     Paginateable,
     BaseListViewQueryParamsModel,
     ListViewModel,
-    ObjectIdFromUrl,
     ResourceUri,
     ParentResourceModel,
 )
@@ -12,9 +11,10 @@ from aiodal import dal
 from aiodal.oqm import dbentity, query
 from aiodal.helpers import sa_total_count
 import sqlalchemy as sa
-from fastapi import Query
+from fastapi import Query, HTTPException
 import pydantic
 import datetime
+from .. import paginator
 
 
 class IngredientInInventoryQueryParams(BaseListViewQueryParamsModel):
@@ -118,48 +118,6 @@ class IngredientInInventoryListViewEntity(IngredientInInventoryData, Paginateabl
         return stmt
 
 
-@dataclasses.dataclass
-class IngredientInInventoryDetailViewEntity(
-    IngredientInInventoryData, dbentity.Queryable[ObjectIdFromUrl]
-):
-    @classmethod
-    def query_stmt(
-        cls, transaction: dal.TransactionManager, where: ObjectIdFromUrl
-    ) -> sa.Select[Any]:
-        ing = transaction.get_table("ingredient")
-        t = transaction.get_table("ingredient_in_inventory")
-        stmt = (
-            sa.select(
-                t.c.id,
-                ing.c.name,
-                t.c.ingredient_id,
-                t.c.from_where,
-                t.c.brand,
-                t.c.quantity,
-                t.c.unit,
-                t.c.purchased_on,
-                t.c.finished_on,
-            )
-            .select_from(t.join(ing, t.c.ingredient_id == ing.c.id))
-            .where(t.c.id == where.obj_id)
-            .order_by(ing.c.name, t.c.purchased_on)
-        )
-
-        return stmt
-
-
-class IngredientInInventoryListQ(
-    query.ListQ[IngredientInInventoryListViewEntity, IngredientInInventoryQueryParams]
-):
-    __db_obj__ = IngredientInInventoryListViewEntity
-
-
-class IngredientInInventoryDetailQ(
-    query.DetailQ[IngredientInInventoryDetailViewEntity, ObjectIdFromUrl]
-):
-    __db_obj__ = IngredientInInventoryDetailViewEntity
-
-
 class IngredientInInventoryResource(ParentResourceModel):
     id: int
     name: str
@@ -188,6 +146,100 @@ class IngredientInInventoryResource(ParentResourceModel):
             }
         return None
 
+    @classmethod
+    async def detail(
+        cls,
+        transaction: dal.TransactionManager,
+        obj_id: int,
+    ) -> "IngredientInInventoryResource":
+        ing = transaction.get_table("ingredient")
+        t = transaction.get_table("ingredient_in_inventory")
+        stmt = (
+            sa.select(
+                t.c.id,
+                ing.c.name,
+                t.c.ingredient_id,
+                t.c.from_where,
+                t.c.brand,
+                t.c.quantity,
+                t.c.unit,
+                t.c.purchased_on,
+                t.c.finished_on,
+            )
+            .select_from(t.join(ing, t.c.ingredient_id == ing.c.id))
+            .where(t.c.id == obj_id)
+            .order_by(ing.c.name, t.c.purchased_on)
+        )
+
+        res = await transaction.execute(stmt)
+        result = res.one_or_none()
+        if not result:
+            raise HTTPException(status_code=404, detail="Not Found.")
+
+        return cls.model_validate(result)
+
 
 class IngredientInInventoryListView(ListViewModel[IngredientInInventoryResource]):
     results: List[IngredientInInventoryResource]
+
+    @classmethod
+    async def get(
+        cls,
+        transaction: dal.TransactionManager,
+        request_url: str,
+        params: IngredientInInventoryQueryParams,
+    ) -> "IngredientInInventoryListView":
+        ing = transaction.get_table("ingredient")
+        t = transaction.get_table("ingredient_in_inventory")
+        stmt = (
+            sa.select(
+                t.c.id,
+                ing.c.name,
+                t.c.ingredient_id,
+                t.c.from_where,
+                t.c.brand,
+                t.c.quantity,
+                t.c.unit,
+                t.c.purchased_on,
+                t.c.finished_on,
+                sa_total_count(t.c.id),
+            )
+            .select_from(t.join(ing, t.c.ingredient_id == ing.c.id))
+            .order_by(ing.c.name, t.c.purchased_on)
+            .offset(params.offset)
+            .limit(params.limit)
+        )
+
+        if params.name:
+            stmt = stmt.where(ing.c.name == params.name)
+        if params.name__contains:
+            stmt = stmt.where(ing.c.name.contains(params.name__contains))
+        if params.from_where:
+            stmt = stmt.where(t.c.from_where == params.from_where)
+        if params.from_where__contains:
+            stmt = stmt.where(t.c.from_where.contains(params.from_where__contains))
+
+        if params.purchased_on:
+            stmt = stmt.where(t.c.purchased_on == params.purchased_on)
+        if params.purchased_on__le:
+            stmt = stmt.where(t.c.purchased_on <= params.purchased_on__le)
+        if params.purchased_on__ge:
+            stmt = stmt.where(t.c.purchased_on >= params.purchased_on__ge)
+
+        if params.finished_on:
+            stmt = stmt.where(t.c.finished_on == params.finished_on)
+        if params.finished_on__le:
+            stmt = stmt.where(t.c.finished_on <= params.finished_on__le)
+        if params.finished_on__ge:
+            stmt = stmt.where(t.c.finished_on >= params.finished_on__ge)
+
+        res = await transaction.execute(stmt)
+        results = [dict(r) for r in res.mappings()]
+        page = paginator.get(results, request_url, params.offset, params.limit)
+        return cls.model_validate(
+            {
+                "total_count": page.total_count,
+                "next_url": page.next_url,
+                "results": results,
+            }
+        )

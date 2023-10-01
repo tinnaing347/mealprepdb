@@ -3,9 +3,7 @@ from fastapi import APIRouter, Depends, Request
 # from ..auth import auth0
 from ..deps import get_transaction
 from . import dish as model, dish_ingredient as dish_ing_model
-from aiodal.oqm import views
 from aiodal import dal
-from ..base import ObjectIdFromUrl
 from typing import List, Any
 
 deps: List[Any] = [
@@ -23,12 +21,9 @@ async def dish_list_view(
 ) -> model.DishListView:
     """Return a list of dishes"""
 
-    q = model.DishListQ(where=params)
-    data = await views.TotalCountListViewQuery.from_query(
-        transaction, request.url._url, params.offset, params.limit, q, "/v1"
+    return await model.DishListView.get(
+        transaction=transaction, request_url=str(request.url), params=params
     )
-
-    return model.DishListView.model_validate(data)
 
 
 @router.get("/{id}")
@@ -39,11 +34,7 @@ async def dish_detail_view(
 ) -> model.DishResource:
     """Return an dish detail."""
 
-    detail_params = ObjectIdFromUrl(id)
-    q = model.DishDetailQ(where=detail_params)
-    data = await views.DetailViewQuery.from_query(transaction, q)
-
-    return model.DishResource.model_validate(data.obj)
+    return await model.DishResource.detail(transaction, obj_id=id)
 
 
 @router.get("/{id}/ingredient/")
@@ -56,10 +47,6 @@ async def dish_ingredient_list_view(
 ) -> dish_ing_model.DishIngredientListView:
     """Return a list of ingredients used in a dish."""
 
-    params_ = dish_ing_model.PrivateDishIngredientQueryParams(dish_id=id, params=params)
-    q = dish_ing_model.DishIngredientListQ(where=params_)
-    data = await views.TotalCountListViewQuery.from_query(
-        transaction, request.url._url, params.offset, params.limit, q, "/v1"
+    return await dish_ing_model.DishIngredientListView.from_dish(
+        transaction=transaction, dish_id=id, request_url=str(request.url), params=params
     )
-
-    return dish_ing_model.DishIngredientListView.model_validate(data)

@@ -39,13 +39,6 @@ class ObjectIdFromUrl:
         self.obj_id = obj_id
 
 
-class OwnedObject:
-    def __init__(self, obj_id: int, user_id: str, org_id: str | None = None):
-        self.obj_id = obj_id
-        self.user_id = user_id
-        self.org_id = org_id
-
-
 # NOTE this is needed so we can wrap subclasses in dataclass API
 @dataclasses.dataclass
 class Paginateable(_AiodalPaginateable):  # type: ignore [type-arg]
