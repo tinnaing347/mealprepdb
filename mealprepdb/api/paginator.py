@@ -29,7 +29,7 @@ def get(
     url_start_index: str = "/v1",
 ) -> NextPageInfo:
     """Hacked from the innerds of aiodal.oqm. We get the same pagination calculation but its more
-    loosely coupled with what we need for basat in terms of types.
+    loosely coupled
 
     Our list views should create RowMappings using `list(result.mappings())` to pass here.
 

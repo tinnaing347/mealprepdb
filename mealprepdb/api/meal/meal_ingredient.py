@@ -1,10 +1,5 @@
 from typing import Dict, Optional, List
-from ..base import (
-    BaseListViewQueryParamsModel,
-    ListViewModel,
-    ResourceUri,
-    ParentResourceModel,
-)
+from .. import base
 from aiodal import dal
 from aiodal.helpers import sa_total_count
 import sqlalchemy as sa
@@ -14,7 +9,7 @@ import datetime
 from .. import paginator
 
 
-class MealIngredientQueryParams(BaseListViewQueryParamsModel):
+class MealIngredientQueryParams(base.BaseListViewQueryParamsModel):
     def __init__(
         self,
         ingredient_name: str = Query(None),
@@ -34,7 +29,25 @@ class MealIngredientQueryParams(BaseListViewQueryParamsModel):
         self.limit = limit
 
 
-class MealIngredientResource(ParentResourceModel):
+class MealIngredientBaseForm(base.BaseFormModel):
+    meal_id: int | None = None
+    ingredient_id: int | None = None
+    quantity: float | None = None
+    unit: str | None = None
+
+
+class MealIngredientCreateForm(MealIngredientBaseForm):
+    meal_id: int
+    ingredient_id: int
+    quantity: float
+    unit: str
+
+
+class MealIngredientUpdateForm(MealIngredientBaseForm):
+    ...
+
+
+class MealIngredientResource(base.ParentResourceModel):
     id: int
     meal_type: str
     meal_id: int
@@ -46,7 +59,7 @@ class MealIngredientResource(ParentResourceModel):
 
     @pydantic.computed_field  # type: ignore[misc]
     @property
-    def links(self) -> Optional[Dict[str, ResourceUri]]:
+    def links(self) -> Optional[Dict[str, base.ResourceUri]]:
         if self._fastapi:
             return {
                 "ingredient": self._fastapi.url_path_for(
@@ -56,8 +69,32 @@ class MealIngredientResource(ParentResourceModel):
             }
         return None
 
+    @classmethod
+    async def create(
+        cls, transaction: dal.TransactionManager, form: MealIngredientCreateForm
+    ) -> "MealIngredientResource":
+        result = await base.create(
+            transaction, tablename="meal_ingredient", form_data=form.model_dump()
+        )
+        return cls.model_validate(result)
 
-class MealIngredientListView(ListViewModel[MealIngredientResource]):
+    @classmethod
+    async def update(
+        cls,
+        transaction: dal.TransactionManager,
+        obj_id: int,
+        form: MealIngredientUpdateForm,
+    ) -> "MealIngredientResource":
+        result = await base.update(
+            transaction,
+            tablename="meal_ingredient",
+            obj_id=obj_id,
+            form_data=form.model_dump(exclude_unset=True),
+        )
+        return cls.model_validate(result)
+
+
+class MealIngredientListView(base.ListViewModel[MealIngredientResource]):
     results: List[MealIngredientResource]
 
     @classmethod

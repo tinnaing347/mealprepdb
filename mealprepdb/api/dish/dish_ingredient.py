@@ -1,15 +1,6 @@
-from typing import Dict, Optional, Any, List
-import dataclasses
-from ..base import (
-    Paginateable,
-    BaseListViewQueryParamsModel,
-    ListViewModel,
-    ObjectIdFromUrl,
-    ResourceUri,
-    ParentResourceModel,
-)
+from typing import Dict, Optional, List
+from .. import base
 from aiodal import dal
-from aiodal.oqm import dbentity, query
 from aiodal.helpers import sa_total_count
 import sqlalchemy as sa
 from fastapi import Query
@@ -18,7 +9,7 @@ import datetime
 from .. import paginator
 
 
-class DishIngredientQueryParams(BaseListViewQueryParamsModel):
+class DishIngredientQueryParams(base.BaseListViewQueryParamsModel):
     def __init__(
         self,
         ingredient_name__contains: str = Query(None),
@@ -32,7 +23,26 @@ class DishIngredientQueryParams(BaseListViewQueryParamsModel):
         self.limit = limit
 
 
-class DishIngredientResource(ParentResourceModel):
+class DishIngredientBaseForm(base.BaseFormModel):
+    dish_id: int | None = None
+    ingredient_id: int | None = None
+    quantity: float | None = None
+    unit: str | None = None
+    used_on: datetime.date | None = None
+
+
+class DishIngredientCreateForm(DishIngredientBaseForm):
+    name: str
+    created_on: datetime.date
+
+
+class DishIngredientUpdateForm(DishIngredientBaseForm):
+    dish_id: int
+    ingredient_id: int
+    used_on: datetime.date
+
+
+class DishIngredientResource(base.ParentResourceModel):
     id: int
     dish_id: int
     dish_name: str
@@ -44,7 +54,7 @@ class DishIngredientResource(ParentResourceModel):
 
     @pydantic.computed_field  # type: ignore[misc]
     @property
-    def links(self) -> Optional[Dict[str, ResourceUri]]:
+    def links(self) -> Optional[Dict[str, base.ResourceUri]]:
         if self._fastapi:
             return {
                 "dish": self._fastapi.url_path_for("dish_detail_view", id=self.dish_id),
@@ -54,8 +64,32 @@ class DishIngredientResource(ParentResourceModel):
             }
         return None
 
+    @classmethod
+    async def create(
+        cls, transaction: dal.TransactionManager, form: DishIngredientCreateForm
+    ) -> "DishIngredientResource":
+        result = await base.create(
+            transaction, tablename="dish_ingredient", form_data=form.model_dump()
+        )
+        return cls.model_validate(result)
 
-class DishIngredientListView(ListViewModel[DishIngredientResource]):
+    @classmethod
+    async def update(
+        cls,
+        transaction: dal.TransactionManager,
+        obj_id: int,
+        form: DishIngredientUpdateForm,
+    ) -> "DishIngredientResource":
+        result = await base.update(
+            transaction,
+            tablename="dish_ingredient",
+            obj_id=obj_id,
+            form_data=form.model_dump(exclude_unset=True),
+        )
+        return cls.model_validate(result)
+
+
+class DishIngredientListView(base.ListViewModel[DishIngredientResource]):
     results: List[DishIngredientResource]
 
     @classmethod

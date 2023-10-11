@@ -1,14 +1,17 @@
-from typing import Generic, Optional, TypeVar, Annotated, Dict
+from typing import Generic, Optional, TypeVar, Annotated, Dict, Any
 import abc
 
 import pydantic
 import orjson
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 import dataclasses
 from starlette.datastructures import URLPath
 
 from aiodal.oqm.views import Paginateable as _AiodalPaginateable
 import enum
+from aiodal import dal
+from sqlalchemy.exc import IntegrityError
+import sqlalchemy as sa
 
 
 def orjson_serializer(obj: object) -> str:
@@ -51,6 +54,10 @@ class HyperModel(pydantic.BaseModel):
     @classmethod
     def init_app(cls, app: FastAPI) -> None:
         cls._fastapi = app
+
+
+class BaseFormModel(pydantic.BaseModel, abc.ABC):
+    ...
 
 
 class ResourceModel(HyperModel, abc.ABC):
@@ -110,3 +117,53 @@ class MealTypeEnum(str, enum.Enum):
     dessert = "dessert"
     snack = "snack"
     _default = ""
+
+
+# here for now
+async def create(
+    transaction: dal.TransactionManager, tablename: str, form_data: Dict[str, Any]
+) -> sa.Row[Any]:
+    """create method"""
+    t = transaction.get_table(tablename)
+    data = {
+        **form_data,
+    }
+
+    stmt = sa.insert(t).values(data).returning(t)
+
+    try:
+        res = await transaction.execute(stmt)
+    except IntegrityError:
+        raise HTTPException(status_code=409, detail="Conflict.")
+
+    return res.one()
+
+
+async def update(
+    transaction: dal.TransactionManager,
+    tablename: str,
+    obj_id: int,
+    form_data: Dict[str, Any],
+) -> sa.Row[Any]:
+    t = transaction.get_table(tablename)
+    stmt = (
+        sa.update(t)
+        .values(
+            {
+                **form_data,
+            }
+        )
+        .where(t.c.id == obj_id)
+    ).returning(t)
+
+    try:
+        res = await transaction.execute(stmt)
+
+    except IntegrityError:
+        raise HTTPException(status_code=409, detail="Conflict.")
+
+    result = res.one_or_none()
+    if not result:
+        raise HTTPException(status_code=409, detail="Stale Data.")
+
+    return result

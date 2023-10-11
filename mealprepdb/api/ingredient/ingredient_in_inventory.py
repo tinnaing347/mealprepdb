@@ -1,14 +1,7 @@
 from typing import Dict, Optional, Any, List
 import dataclasses
-from ..base import (
-    Paginateable,
-    BaseListViewQueryParamsModel,
-    ListViewModel,
-    ResourceUri,
-    ParentResourceModel,
-)
+from .. import base
 from aiodal import dal
-from aiodal.oqm import dbentity, query
 from aiodal.helpers import sa_total_count
 import sqlalchemy as sa
 from fastapi import Query, HTTPException
@@ -17,7 +10,7 @@ import datetime
 from .. import paginator
 
 
-class IngredientInInventoryQueryParams(BaseListViewQueryParamsModel):
+class IngredientInInventoryQueryParams(base.BaseListViewQueryParamsModel):
     def __init__(
         self,
         name: str = Query(None),
@@ -64,7 +57,7 @@ class IngredientInInventoryData:
 
 
 @dataclasses.dataclass
-class IngredientInInventoryListViewEntity(IngredientInInventoryData, Paginateable):
+class IngredientInInventoryListViewEntity(IngredientInInventoryData, base.Paginateable):
     @classmethod
     def query_stmt(
         cls,
@@ -118,20 +111,39 @@ class IngredientInInventoryListViewEntity(IngredientInInventoryData, Paginateabl
         return stmt
 
 
-class IngredientInInventoryResource(ParentResourceModel):
+class IngredientInInventoryBaseForm(base.BaseFormModel):
+    name: str | None = ""
+    ingredient_id: int | None = None
+    from_where: str | None = ""
+    brand: str | None = ""
+    quantity: int | None = None
+    unit: str | None = ""
+    purchased_on: datetime.date | None = None
+    finished_on: datetime.date | None = None
+
+
+class IngredientInInventoryCreateForm(IngredientInInventoryBaseForm):
+    ingredient_id: int
+
+
+class IngredientInInventoryUpdateForm(IngredientInInventoryBaseForm):
+    ...
+
+
+class IngredientInInventoryResource(base.ParentResourceModel):
     id: int
     name: str
     ingredient_id: int
-    from_where: Optional[str] = ""
-    brand: Optional[str] = ""
+    from_where: str | None = ""
+    brand: str | None = ""
     quantity: Optional[float] = None
-    unit: Optional[str] = ""
-    purchased_on: Optional[datetime.date] = None
-    finished_on: Optional[datetime.date] = None
+    unit: str | None = ""
+    purchased_on: datetime.date | None = None
+    finished_on: datetime.date | None = None
 
     @pydantic.computed_field  # type: ignore[misc]
     @property
-    def links(self) -> Optional[Dict[str, ResourceUri]]:
+    def links(self) -> Optional[Dict[str, base.ResourceUri]]:
         if self._fastapi:
             return {
                 "self": self._fastapi.url_path_for(
@@ -178,8 +190,34 @@ class IngredientInInventoryResource(ParentResourceModel):
 
         return cls.model_validate(result)
 
+    @classmethod
+    async def create(
+        cls, transaction: dal.TransactionManager, form: IngredientInInventoryCreateForm
+    ) -> "IngredientInInventoryResource":
+        result = await base.create(
+            transaction,
+            tablename="ingredient_in_inventory",
+            form_data=form.model_dump(),
+        )
+        return cls.model_validate(result)
 
-class IngredientInInventoryListView(ListViewModel[IngredientInInventoryResource]):
+    @classmethod
+    async def update(
+        cls,
+        transaction: dal.TransactionManager,
+        obj_id: int,
+        form: IngredientInInventoryUpdateForm,
+    ) -> "IngredientInInventoryResource":
+        result = await base.update(
+            transaction,
+            tablename="ingredient_in_inventory",
+            obj_id=obj_id,
+            form_data=form.model_dump(exclude_unset=True),
+        )
+        return cls.model_validate(result)
+
+
+class IngredientInInventoryListView(base.ListViewModel[IngredientInInventoryResource]):
     results: List[IngredientInInventoryResource]
 
     @classmethod

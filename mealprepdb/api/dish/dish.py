@@ -1,10 +1,5 @@
 from typing import Dict, Optional, Any, List
-from ..base import (
-    BaseListViewQueryParamsModel,
-    ListViewModel,
-    ResourceUri,
-    ParentResourceModel,
-)
+from .. import base
 from aiodal import dal
 from aiodal.helpers import sa_total_count
 import sqlalchemy as sa
@@ -14,7 +9,7 @@ import datetime
 from .. import paginator
 
 
-class DishQueryParams(BaseListViewQueryParamsModel):
+class DishQueryParams(base.BaseListViewQueryParamsModel):
     def __init__(
         self,
         name__contains: str = Query(None),
@@ -34,7 +29,22 @@ class DishQueryParams(BaseListViewQueryParamsModel):
         self.limit = limit
 
 
-class DishResource(ParentResourceModel):
+class DishBaseForm(base.BaseFormModel):
+    name: str | None = ""
+    parent_dish_id: int | None = None
+    created_on: datetime.date | None = None
+
+
+class DishCreateForm(DishBaseForm):
+    name: str
+    created_on: datetime.date
+
+
+class DishUpdateForm(DishBaseForm):
+    ...
+
+
+class DishResource(base.ParentResourceModel):
     id: int
     name: str
     parent_dish_id: Optional[int] = None
@@ -42,7 +52,7 @@ class DishResource(ParentResourceModel):
 
     @pydantic.computed_field  # type: ignore[misc]
     @property
-    def links(self) -> Optional[Dict[str, ResourceUri]]:
+    def links(self) -> Optional[Dict[str, base.ResourceUri]]:
         if self._fastapi:
             return {
                 "self": self._fastapi.url_path_for("dish_detail_view", id=self.id),
@@ -74,8 +84,29 @@ class DishResource(ParentResourceModel):
 
         return cls.model_validate(result)
 
+    @classmethod
+    async def create(
+        cls, transaction: dal.TransactionManager, form: DishCreateForm
+    ) -> "DishResource":
+        result = await base.create(
+            transaction, tablename="dish", form_data=form.model_dump()
+        )
+        return cls.model_validate(result)
 
-class DishListView(ListViewModel[DishResource]):
+    @classmethod
+    async def update(
+        cls, transaction: dal.TransactionManager, obj_id: int, form: DishUpdateForm
+    ) -> "DishResource":
+        result = await base.update(
+            transaction,
+            tablename="dish",
+            obj_id=obj_id,
+            form_data=form.model_dump(exclude_unset=True),
+        )
+        return cls.model_validate(result)
+
+
+class DishListView(base.ListViewModel[DishResource]):
     results: List[DishResource]
 
     @classmethod
