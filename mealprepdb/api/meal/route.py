@@ -48,6 +48,29 @@ async def meal_detail_view(
     return await model.MealResource.detail(transaction, obj_id=id)
 
 
+@meal_router.post("/")
+async def meal_create_view(
+    form: model.MealCreateForm,
+    transaction: dal.TransactionManager = Depends(get_transaction),
+    # _: Auth0User = Security(auth0.get_user, scopes=[READ_INGREDIENT]),
+) -> model.MealResource:
+    """Return an meal create."""
+
+    return await model.MealResource.create(transaction, form=form)
+
+
+@meal_router.put("/{id}")
+async def meal_update_view(
+    id: int,
+    form: model.MealUpdateForm,
+    transaction: dal.TransactionManager = Depends(get_transaction),
+    # _: Auth0User = Security(auth0.get_user, scopes=[READ_INGREDIENT]),
+) -> model.MealResource:
+    """Return an meal update."""
+
+    return await model.MealResource.update(transaction, obj_id=id, form=form)
+
+
 @ingredient_router.get("/{id}/meal/")
 async def ingredient_meal_list_view(
     id: int,
@@ -66,6 +89,31 @@ async def ingredient_meal_list_view(
     )
 
 
+@router.post("/meal_ingredient", tags=["meal_ingredient"])
+async def meal_ingredient_create_view(
+    form: meal_ing_model.MealIngredientCreateForm,
+    transaction: dal.TransactionManager = Depends(get_transaction),
+    # _: Auth0User = Security(auth0.get_user, scopes=[READ_INGREDIENT]),
+) -> meal_ing_model.MealIngredientResource:
+    """Return a meal ingredient create."""
+
+    return await meal_ing_model.MealIngredientResource.create(transaction, form=form)
+
+
+@router.put("/meal_ingredient/{id}", tags=["meal_ingredient"])
+async def meal_ingredient_update_view(
+    id: int,
+    form: meal_ing_model.MealIngredientUpdateForm,
+    transaction: dal.TransactionManager = Depends(get_transaction),
+    # _: Auth0User = Security(auth0.get_user, scopes=[READ_INGREDIENT]),
+) -> meal_ing_model.MealIngredientResource:
+    """Return a meal ingredient update."""
+
+    return await meal_ing_model.MealIngredientResource.update(
+        transaction, obj_id=id, form=form
+    )
+
+
 @dish_router.get("/{id}/meal/")
 async def dish_meal_list_view(
     id: int,
@@ -81,6 +129,31 @@ async def dish_meal_list_view(
         dish_id=id,
         request_url=str(request.url),
         params=params,
+    )
+
+
+@router.post("/meal_dish", tags=["meal_dish"])
+async def meal_dish_create_view(
+    form: meal_dish_model.MealDishCreateForm,
+    transaction: dal.TransactionManager = Depends(get_transaction),
+    # _: Auth0User = Security(auth0.get_user, scopes=[READ_INGREDIENT]),
+) -> meal_dish_model.MealDishResource:
+    """Return a dish ingredient create."""
+
+    return await meal_dish_model.MealDishResource.create(transaction, form=form)
+
+
+@router.put("/meal_dish/{id}", tags=["meal_dish"])
+async def meal_dish_update_view(
+    id: int,
+    form: meal_dish_model.MealDishUpdateForm,
+    transaction: dal.TransactionManager = Depends(get_transaction),
+    # _: Auth0User = Security(auth0.get_user, scopes=[READ_INGREDIENT]),
+) -> meal_dish_model.MealDishResource:
+    """Return a dish ingredient update."""
+
+    return await meal_dish_model.MealDishResource.update(
+        transaction, obj_id=id, form=form
     )
 
 

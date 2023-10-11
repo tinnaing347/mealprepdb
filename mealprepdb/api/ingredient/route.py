@@ -37,6 +37,29 @@ async def ingredient_detail_view(
     return await model.IngredientResource.detail(transaction=transaction, obj_id=id)
 
 
+@router.post("/")
+async def ingredient_create_view(
+    form: model.IngredientCreateForm,
+    transaction: dal.TransactionManager = Depends(get_transaction),
+    # _: Auth0User = Security(auth0.get_user, scopes=[READ_INGREDIENT]),
+) -> model.IngredientResource:
+    """Return an ingredient create."""
+
+    return await model.IngredientResource.create(transaction, form=form)
+
+
+@router.put("/{id}")
+async def ingredient_update_view(
+    id: int,
+    form: model.IngredientUpdateForm,
+    transaction: dal.TransactionManager = Depends(get_transaction),
+    # _: Auth0User = Security(auth0.get_user, scopes=[READ_INGREDIENT]),
+) -> model.IngredientResource:
+    """Return an ingredient update."""
+
+    return await model.IngredientResource.update(transaction, obj_id=id, form=form)
+
+
 @router.get("/inventory/")
 async def ingredient_in_inventory_list_view(
     request: Request,
@@ -60,4 +83,31 @@ async def ingredient_in_inventory_detail_view(
     """Return an ingredient in inventory detail."""
     return await inventory_model.IngredientInInventoryResource.detail(
         transaction, obj_id=id
+    )
+
+
+@router.post("/inventory")
+async def ingredient_in_inventory_create_view(
+    form: inventory_model.IngredientInInventoryCreateForm,
+    transaction: dal.TransactionManager = Depends(get_transaction),
+    # _: Auth0User = Security(auth0.get_user, scopes=[READ_INGREDIENT]),
+) -> inventory_model.IngredientInInventoryResource:
+    """Return an ingredient create."""
+
+    return await inventory_model.IngredientInInventoryResource.create(
+        transaction, form=form
+    )
+
+
+@router.put("/inventory/{id}")
+async def ingredient_in_inventory_update_view(
+    id: int,
+    form: inventory_model.IngredientInInventoryUpdateForm,
+    transaction: dal.TransactionManager = Depends(get_transaction),
+    # _: Auth0User = Security(auth0.get_user, scopes=[READ_INGREDIENT]),
+) -> inventory_model.IngredientInInventoryResource:
+    """Return an ingredient update."""
+
+    return await inventory_model.IngredientInInventoryResource.update(
+        transaction, obj_id=id, form=form
     )
