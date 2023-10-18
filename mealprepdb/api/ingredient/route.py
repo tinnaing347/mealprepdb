@@ -37,7 +37,7 @@ async def ingredient_detail_view(
     return await model.IngredientResource.detail(transaction=transaction, obj_id=id)
 
 
-@router.post("/")
+@router.post("/", status_code=201)
 async def ingredient_create_view(
     form: model.IngredientCreateForm,
     transaction: dal.TransactionManager = Depends(get_transaction),
@@ -86,7 +86,7 @@ async def ingredient_in_inventory_detail_view(
     )
 
 
-@router.post("/inventory")
+@router.post("/inventory", status_code=201)
 async def ingredient_in_inventory_create_view(
     form: inventory_model.IngredientInInventoryCreateForm,
     transaction: dal.TransactionManager = Depends(get_transaction),

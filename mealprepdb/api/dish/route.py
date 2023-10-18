@@ -38,7 +38,7 @@ async def dish_detail_view(
     return await model.DishResource.detail(transaction, obj_id=id)
 
 
-@dish_router.post("/")
+@dish_router.post("/", status_code=201)
 async def dish_create_view(
     form: model.DishCreateForm,
     transaction: dal.TransactionManager = Depends(get_transaction),
@@ -76,7 +76,7 @@ async def dish_ingredient_list_view(
     )
 
 
-@router.post("/dish_ingredient", tags=["dish_ingredient"])
+@router.post("/dish_ingredient", status_code=201, tags=["dish_ingredient"])
 async def dish_ingredient_create_view(
     form: dish_ing_model.DishIngredientCreateForm,
     transaction: dal.TransactionManager = Depends(get_transaction),

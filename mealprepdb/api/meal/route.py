@@ -48,7 +48,7 @@ async def meal_detail_view(
     return await model.MealResource.detail(transaction, obj_id=id)
 
 
-@meal_router.post("/")
+@meal_router.post("/", status_code=201)
 async def meal_create_view(
     form: model.MealCreateForm,
     transaction: dal.TransactionManager = Depends(get_transaction),
@@ -89,7 +89,7 @@ async def ingredient_meal_list_view(
     )
 
 
-@router.post("/meal_ingredient", tags=["meal_ingredient"])
+@router.post("/meal_ingredient", status_code=201, tags=["meal_ingredient"])
 async def meal_ingredient_create_view(
     form: meal_ing_model.MealIngredientCreateForm,
     transaction: dal.TransactionManager = Depends(get_transaction),
@@ -132,7 +132,7 @@ async def dish_meal_list_view(
     )
 
 
-@router.post("/meal_dish", tags=["meal_dish"])
+@router.post("/meal_dish", status_code=201, tags=["meal_dish"])
 async def meal_dish_create_view(
     form: meal_dish_model.MealDishCreateForm,
     transaction: dal.TransactionManager = Depends(get_transaction),

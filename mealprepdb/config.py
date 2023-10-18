@@ -11,7 +11,7 @@ POSTGRES_DB = os.environ.get("MEALPREPDB_POSTGRES_DB", "")
 AUTH0_DOMAIN = os.environ.get("MEALPREPDB_AUTH0_DOMAIN", "")
 AUTH0_AUDIENCE = os.environ.get("MEALPREPDB_AUTH0_AUDIENCE", "")
 AUTH0_ORG_ID = os.environ.get("MEALPREPDB_AUTH0_ORG_ID", "")
-
+BASE_BACKEND_URL = "http://api:8080"
 
 # docker-compose will set these to strings if not set.
 MAX_OVERFLOW = os.environ.get("MEALPREPDB_DB_ENGINE_MAX_OVERFLOW", 5)

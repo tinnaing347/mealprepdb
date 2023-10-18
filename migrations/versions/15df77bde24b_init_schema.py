@@ -66,7 +66,7 @@ def upgrade() -> None:
             sa.Enum(
                 *_ingredient_type_enum,
                 name="ingredienttype_cc",
-                create_constraint=True,  # will this bite me back in the future?
+                create_constraint=False,
                 native_enum=False,
             ),
             nullable=True,

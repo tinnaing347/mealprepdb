@@ -18,10 +18,9 @@ services:
       - "5454:5432" # for debugging 
     shm_size: 1g
 
-
-  app:
+  api:
     restart: "no"
-    container_name: "mealprepdb_app"
+    container_name: "mealprepdb_api"
     image: mealprepdb:dev
     environment:
       - WAIT_HOSTS=pgdb:5432
@@ -49,6 +48,27 @@ services:
       - "8080:8080"
     depends_on:
       - pgdb
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+    
+  frontend: 
+    restart: "always"
+    container_name: "mealprepdb_frontend"
+    image: mealprepdb:dev
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    command: sh -c "gunicorn mealprepdb.frontend.app:server -b 0.0.0.0:8081 --log-level debug --reload"
+    volumes:
+      - .:/app
+    ports:
+      - "8081:8081"
+    depends_on:
+      api:
+        condition: service_healthy
 
 volumes:
   pgdata:

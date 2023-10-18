@@ -110,7 +110,13 @@ async def startup() -> None:  # configure and load postgres
     await db.reflect(engine, metadata)  # reflect the tables and initialize a session
 
 
-router = APIRouter(prefix="/v1")
+router = APIRouter(prefix="")
+
+
+@router.get("/health/")
+async def health():
+    return {"message": "a healthy boi"}
+
 
 app.include_router(router)
 app.include_router(ingredient_router)
