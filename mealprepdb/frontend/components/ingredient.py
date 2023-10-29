@@ -11,8 +11,7 @@ _ingredient_drop_down = html.Div(
                 style={
                     "float": "left",
                     "width": "70%",
-                    "display": "inline-block",
-                    "margin-right": "-150px",
+                    "margin-right": "-20%",
                 },
             ),
             id="ingredient_ls_container",

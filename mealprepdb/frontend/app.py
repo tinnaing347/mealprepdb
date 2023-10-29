@@ -1,8 +1,4 @@
-from dash import Dash, html, dcc, callback, Output, Input, ctx
-import plotly.express as px
-import httpx
-from typing import Dict, Any
-from dash.exceptions import PreventUpdate
+from dash import Dash, html, dcc
 from .components import ingredient_layout, dish_layout, meal_layout
 from .callbacks import *
 

@@ -114,7 +114,7 @@ router = APIRouter(prefix="")
 
 
 @router.get("/health/")
-async def health():
+async def health() -> dict[str, str]:
     return {"message": "a healthy boi"}
 
 

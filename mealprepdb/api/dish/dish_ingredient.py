@@ -28,29 +28,23 @@ class DishIngredientBaseForm(base.BaseFormModel):
     ingredient_id: int | None = None
     quantity: float | None = None
     unit: str | None = None
-    used_on: datetime.date | None = None
 
 
 class DishIngredientCreateForm(DishIngredientBaseForm):
-    name: str
-    created_on: datetime.date
+    dish_id: int
+    ingredient_id: int
 
 
 class DishIngredientUpdateForm(DishIngredientBaseForm):
-    dish_id: int
-    ingredient_id: int
-    used_on: datetime.date
+    ...
 
 
 class DishIngredientResource(base.ParentResourceModel):
     id: int
     dish_id: int
-    dish_name: str
     ingredient_id: int
-    ingredient_name: str
-    quantity: Optional[float] = None
-    unit: Optional[str] = None
-    used_on: Optional[datetime.date] = None
+    quantity: float | None = None
+    unit: str | None = None
 
     @pydantic.computed_field  # type: ignore[misc]
     @property
@@ -89,8 +83,14 @@ class DishIngredientResource(base.ParentResourceModel):
         return cls.model_validate(result)
 
 
-class DishIngredientListView(base.ListViewModel[DishIngredientResource]):
-    results: List[DishIngredientResource]
+class DishIngredientDetailResource(DishIngredientResource):
+    dish_name: str
+    ingredient_name: str
+    used_on: datetime.date | None = None
+
+
+class DishIngredientListView(base.ListViewModel[DishIngredientDetailResource]):
+    results: List[DishIngredientDetailResource]
 
     @classmethod
     async def from_dish(

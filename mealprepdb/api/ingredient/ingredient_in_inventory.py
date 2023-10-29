@@ -112,11 +112,11 @@ class IngredientInInventoryListViewEntity(IngredientInInventoryData, base.Pagina
 
 
 class IngredientInInventoryBaseForm(base.BaseFormModel):
-    name: str | None = ""
     ingredient_id: int | None = None
     from_where: str | None = ""
     brand: str | None = ""
-    quantity: int | None = None
+    price: float | None = None
+    quantity: float | None = None
     unit: str | None = ""
     purchased_on: datetime.date | None = None
     finished_on: datetime.date | None = None
@@ -132,11 +132,11 @@ class IngredientInInventoryUpdateForm(IngredientInInventoryBaseForm):
 
 class IngredientInInventoryResource(base.ParentResourceModel):
     id: int
-    name: str
     ingredient_id: int
     from_where: str | None = ""
     brand: str | None = ""
-    quantity: Optional[float] = None
+    price: float | None = None
+    quantity: float | None = None
     unit: str | None = ""
     purchased_on: datetime.date | None = None
     finished_on: datetime.date | None = None
@@ -157,38 +157,6 @@ class IngredientInInventoryResource(base.ParentResourceModel):
                 ),
             }
         return None
-
-    @classmethod
-    async def detail(
-        cls,
-        transaction: dal.TransactionManager,
-        obj_id: int,
-    ) -> "IngredientInInventoryResource":
-        ing = transaction.get_table("ingredient")
-        t = transaction.get_table("ingredient_in_inventory")
-        stmt = (
-            sa.select(
-                t.c.id,
-                ing.c.name,
-                t.c.ingredient_id,
-                t.c.from_where,
-                t.c.brand,
-                t.c.quantity,
-                t.c.unit,
-                t.c.purchased_on,
-                t.c.finished_on,
-            )
-            .select_from(t.join(ing, t.c.ingredient_id == ing.c.id))
-            .where(t.c.id == obj_id)
-            .order_by(ing.c.name, t.c.purchased_on)
-        )
-
-        res = await transaction.execute(stmt)
-        result = res.one_or_none()
-        if not result:
-            raise HTTPException(status_code=404, detail="Not Found.")
-
-        return cls.model_validate(result)
 
     @classmethod
     async def create(
@@ -217,8 +185,47 @@ class IngredientInInventoryResource(base.ParentResourceModel):
         return cls.model_validate(result)
 
 
-class IngredientInInventoryListView(base.ListViewModel[IngredientInInventoryResource]):
-    results: List[IngredientInInventoryResource]
+class IngredientInInventoryDetailResource(IngredientInInventoryResource):
+    name: str
+
+    @classmethod
+    async def detail(
+        cls,
+        transaction: dal.TransactionManager,
+        obj_id: int,
+    ) -> "IngredientInInventoryDetailResource":
+        ing = transaction.get_table("ingredient")
+        t = transaction.get_table("ingredient_in_inventory")
+        stmt = (
+            sa.select(
+                t.c.id,
+                ing.c.name,
+                t.c.ingredient_id,
+                t.c.from_where,
+                t.c.brand,
+                t.c.price,
+                t.c.quantity,
+                t.c.unit,
+                t.c.purchased_on,
+                t.c.finished_on,
+            )
+            .select_from(t.join(ing, t.c.ingredient_id == ing.c.id))
+            .where(t.c.id == obj_id)
+            .order_by(ing.c.name, t.c.purchased_on)
+        )
+
+        res = await transaction.execute(stmt)
+        result = res.one_or_none()
+        if not result:
+            raise HTTPException(status_code=404, detail="Not Found.")
+
+        return cls.model_validate(result)
+
+
+class IngredientInInventoryListView(
+    base.ListViewModel[IngredientInInventoryDetailResource]
+):
+    results: List[IngredientInInventoryDetailResource]
 
     @classmethod
     async def get(

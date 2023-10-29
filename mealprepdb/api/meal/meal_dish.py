@@ -49,14 +49,8 @@ class MealDishUpdateForm(MealDishBaseForm):
 
 class MealDishResource(base.ParentResourceModel):
     id: int
-    meal_type: str
     meal_id: int
-    dish_name: str
     dish_id: int
-    quantity: float
-    unit: str
-    consumed_on: Optional[datetime.date] = None
-    dish_created_on: Optional[datetime.date] = None
 
     @pydantic.computed_field  # type: ignore[misc]
     @property
@@ -90,8 +84,17 @@ class MealDishResource(base.ParentResourceModel):
         return cls.model_validate(result)
 
 
-class MealDishListView(base.ListViewModel[MealDishResource]):
-    results: List[MealDishResource]
+class MealDishDetailResource(MealDishResource):
+    meal_type: str
+    dish_name: str
+    quantity: float
+    unit: str
+    consumed_on: Optional[datetime.date] = None
+    dish_created_on: Optional[datetime.date] = None
+
+
+class MealDishListView(base.ListViewModel[MealDishDetailResource]):
+    results: List[MealDishDetailResource]
 
     @classmethod
     async def from_dish(

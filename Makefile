@@ -1,13 +1,13 @@
 test:
-	-docker compose run --rm -e MEALPREPDB_ENVIRONMENT=testing app ./test-runner.sh
+	-docker compose run --rm -e MEALPREPDB_ENVIRONMENT=testing api ./test-runner.sh
 	docker compose down
 
 test-marker:
-	-docker compose run --rm -e MEALPREPDB_ENVIRONMENT=testing app ./test-runner.sh -m $(marker) 
+	-docker compose run --rm -e MEALPREPDB_ENVIRONMENT=testing api ./test-runner.sh -m $(marker) 
 	docker compose down 
 
 test-single-module:
-	-docker compose run --rm -e MEALPREPDB_ENVIRONMENT=testing app ./test-runner.sh -n $(module) 
+	-docker compose run --rm -e MEALPREPDB_ENVIRONMENT=testing api ./test-runner.sh -n $(module) 
 	docker compose down 
 
 upgrade-head:

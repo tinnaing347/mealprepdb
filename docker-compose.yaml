@@ -50,7 +50,10 @@ services:
       - pgdb
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health/"]
-      interval: 5s
+      #wait for this i guess https://github.com/moby/moby/pull/46646
+      # start_period: 0s
+      # start_interval: 5s
+      interval: 30s
       timeout: 10s
       retries: 5
     

@@ -28,7 +28,7 @@ class MealQueryParams(base.BaseListViewQueryParamsModel):
 
 
 class MealBaseForm(base.BaseFormModel):
-    type: Optional[base.MealTypeEnum] = None
+    type: base.MealTypeEnum | None = None
     description: str | None = None
     consumed_on: datetime.date | None = None
 
@@ -44,7 +44,7 @@ class MealUpdateForm(MealBaseForm):
 
 class MealResource(base.ParentResourceModel):
     id: int
-    type: Optional[base.MealTypeEnum] = None
+    type: base.MealTypeEnum | None = None
     description: str = ""
     consumed_on: datetime.date
 

@@ -79,9 +79,9 @@ async def ingredient_in_inventory_detail_view(
     id: int,
     transaction: dal.TransactionManager = Depends(get_transaction),
     # _: Auth0User = Security(auth0.get_user, scopes=[READ_INGREDIENT]),
-) -> inventory_model.IngredientInInventoryResource:
+) -> inventory_model.IngredientInInventoryDetailResource:
     """Return an ingredient in inventory detail."""
-    return await inventory_model.IngredientInInventoryResource.detail(
+    return await inventory_model.IngredientInInventoryDetailResource.detail(
         transaction, obj_id=id
     )
 
