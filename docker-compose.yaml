@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3.9'
 
 services:
   pgdb:
@@ -12,6 +12,11 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     command: postgres -c 'max_connections=100'
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d mealprepdb"]
+      interval: 2s
+      timeout: 3s
+      retries: 10
     expose:
       - "5432"
     ports:
@@ -47,15 +52,17 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - pgdb
+      pgdb:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health/"]
       #wait for this i guess https://github.com/moby/moby/pull/46646
-      # start_period: 0s
-      # start_interval: 5s
-      interval: 30s
+      # https://github.com/moby/moby/issues/45897..
+      start_period: 0s
+      # start-interval: 5s #docker engine needs to be 25 for this to work
+      interval: 10s
       timeout: 10s
-      retries: 5
+      retries: 10
     
   frontend: 
     restart: "always"

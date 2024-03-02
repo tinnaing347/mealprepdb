@@ -243,6 +243,7 @@ class IngredientInInventoryListView(
                 t.c.ingredient_id,
                 t.c.from_where,
                 t.c.brand,
+                t.c.price,
                 t.c.quantity,
                 t.c.unit,
                 t.c.purchased_on,

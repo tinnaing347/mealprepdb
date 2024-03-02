@@ -3,7 +3,7 @@ from .components import ingredient_layout, dish_layout, meal_layout
 from .callbacks import *
 
 
-app = Dash(__name__)
+app = Dash(external_stylesheets=[])
 
 BASE_URL = "http://api:8080"
 
@@ -24,7 +24,7 @@ app.layout = html.Div(
             style={
                 "float": "left",
                 "height": "50px",
-                # "width": "50%",
+                "width": "50%",
             },
         ),
     ]

@@ -61,6 +61,6 @@ else
 
 fi
 poetry run alembic downgrade base
-poetry run mypy mealprepdb --strict
+poetry run mypy mealprepdb/api --strict
 
 PGPASSWORD=${POSTGRES_PASSWORD} dropdb -h ${POSTGRES_HOST} -p ${POSTGRES_PORT} -U ${POSTGRES_USER} -e -f --if-exists ${POSTGRES_TEST_DB}
